@@ -666,10 +666,28 @@ def handle(up):
     except Exception as e:
         print(f"Error: {e}")
 
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is Running 24/7!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    server.serve_forever()
+
 def main():
     init_db()
     try: requests.get(f"{API}/deleteWebhook?drop_pending_updates=True", timeout=10)
     except: pass
+    
+    # Render-এর জন্য ব্যাকগ্রাউন্ডে ওয়েব পোর্ট চালু করা
+    threading.Thread(target=run_web_server, daemon=True).start()
+    
     print("🚀 QxZisanEliteBot (Cloud Ready) চালু হয়েছে!")
     last = 0
     while True:
